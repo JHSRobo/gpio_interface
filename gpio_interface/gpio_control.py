@@ -23,11 +23,11 @@ class GPIOController(Node):
         # Define Parameters, prepare & shut off all pins
         for i in self.gpio_nums:
             self.declare_parameter(f"gpio{i}", False)
-            RPi.GPIO.setup(i, GPIO.OUT)
+            RPi.GPIO.setup(i, RPi.GPIO.OUT)
             RPi.GPIO.output(i, 0)
 
         # Timer, to always check for parameter updates
-        self.timer = self.create_timer(0.25, self.timer_callback)
+        self.timer = self.create_timer(0.1, self.timer_callback)
 
     def timer_callback(self):
         for i in self.gpio_nums:
@@ -35,8 +35,10 @@ class GPIOController(Node):
             if self.gpio_status[i] is not parameter_val:
                 self.gpio_status[i] = parameter_val
                 if parameter_val: 
+                    RPi.GPIO.output(i, 1)
                     self.log.info(f"Turned pin {i} on")
                 else: 
+                    RPi.GPIO.output(i,0)
                     self.log.info(f"Turned pin {i} off")
 
 def main():
