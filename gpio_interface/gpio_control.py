@@ -16,9 +16,9 @@ class GPIOController(Node):
         RPi.GPIO.setmode(RPi.GPIO.BCM)
         RPi.GPIO.setwarnings(False)
 
-        self.gpio_nums = [ 4, 5, 6, 17, 22, 23, 24, 27 ]
-        self.gpio_status = { 4: False, 5: False, 6: False, 17: False, 
-                       22: False, 23: False, 24: False, 27: False }
+        self.gpio_nums = [ 16, 17, 18, 19, 22, 25 ]
+
+        self.gpio_status = { i: False for i in self.gpio_nums }
 
         # Define Parameters, prepare & shut off all pins
         for i in self.gpio_nums:
