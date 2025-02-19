@@ -21,7 +21,6 @@ class StepperMotorNode(Node):
         self.STEP = 21  # Step GPIO Pin
         self.CW = 1     # Clockwise Rotation
         self.CCW = 0    # Counterclockwise Rotation
-        self.SPR = 200   # Steps per Revolution (360 / 1.8)    
       
         # Variables
         self.cur_direction = None
@@ -30,6 +29,10 @@ class StepperMotorNode(Node):
         self.cur_signal = GPIO.HIGH
 
         # GPIO Setup
+
+        # Tell the RPi that we are referring to GPIOs by GPIO number
+        # This means we are NOT referring to them by pin number.
+        # eg. gpio4 is pin #7, and we reference it as 4.
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(DIR, GPIO.OUT)
         GPIO.setup(STEP, GPIO.OUT)
@@ -53,6 +56,7 @@ class StepperMotorNode(Node):
         def update_parameters(self):
             change = (self.speed != self.get_parameter('speed').value) 
             if change:
+                # If speed has a new value, delete the current stepper motor timer and make a new timer with the new delay resulting from the new speed.
                 self.speed = self.get_parameter('speed').value 
                 self.delay = 0.0026 / self.speed 
                 self.destroy_timer(self.timer)
@@ -61,6 +65,7 @@ class StepperMotorNode(Node):
             return SetParametersResult(successful=True)
 
         def joy_callback(self, joy):
+            # Check if the pilot is trying to spin the stepper motor clockwise, counterclockwise, or not at all.
             if joy.axes[4]:
                 self.cur_direction = self.CW
             elif joy.axes[5]:
@@ -68,12 +73,15 @@ class StepperMotorNode(Node):
             else:
                 self.cur_direction = None
 
+            # Change the direction pin according to the new direction value
             if self.cur_direction != None:
                 GPIO.output(self.DIR, self.cur_direction)
 
         def spin_motor(self):
+            # If the pilot is trying to rotate the stepper motor
             if self.cur_direction != None:
-
+                
+                # Output GPIO.HIGH and GPIO.LOW at alternating intervals to the STEP pin.
                 GPIO.output(STEP, self.cur_signal)
 
                 if self.cur_signal == GPIO.HIGH:
