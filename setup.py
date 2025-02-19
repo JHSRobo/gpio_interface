@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gpio_control = gpio_interface.gpio_control:main',
+            'stepper_motor = gpio_interface.stepper_motor:main'
         ],
     },
 )
