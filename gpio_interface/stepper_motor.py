@@ -96,6 +96,8 @@ def main(args=None):
 
     rclpy.spin(stepper_motor)
 
+    GPIO.cleanup()
+
     stepper_motor.destroy_node()
     rclpy.shutdown()
 

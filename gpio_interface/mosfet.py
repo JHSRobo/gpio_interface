@@ -56,6 +56,9 @@ def main(args=None):
     # Runs the program until shutdown
     rclpy.spin(mosfet_node)
 
+    # Stop sending signals to GPIO
+    GPIO.cleanup()
+
     # On shutdown, kills the node
     mosfet_node.destroy_node()
     rclpy.shutdown()
