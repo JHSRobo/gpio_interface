@@ -5,10 +5,15 @@
 
 import rclpy
 from rclpy.node import Node 
+from rcl_interfaces.msg import ParameterDescriptor, IntegerRange
 from sensor_msgs.msg import Joy
 
 import RPi.GPIO as GPIO
 
+# Top Left: 11
+# Top Right: 16
+# Bottom Left: 17
+# Bottom Right: 18
 class MOSFETNode(Node):
     def __init__(self):
         super().__init__('mosfet_node')
@@ -16,8 +21,18 @@ class MOSFETNode(Node):
         # Logger 
         self.log = self.get_logger()
 
-        # GPIO Setup
-        self.PIN = 15
+        # GPIO Pin to turn on and off
+        self.PIN = 11
+
+        # GPIO Pin Parameter
+        bounds = IntegerRange()
+        bounds.from_value = 1
+        bounds.to_value = 4 
+        bounds.step = 1
+        descriptor = ParameterDescriptor(integer_range = [bounds])
+        self.declare_parameter("PIN", 1, descriptor)
+
+        # Vartiable deciding whether the current GPIO Pin should be on or off
         self.cur_signal = GPIO.LOW
 
         # Tell the RPi that we are referring to GPIOs by GPIO number
@@ -34,6 +49,22 @@ class MOSFETNode(Node):
 
         # Subscriber to receive input from joystick
         self.joy_sub = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
+
+        self.create_timer(0.1, self.update_parameters)
+
+    def update_parameters(self):
+        # If the current pin is not the same as the current parameter
+        if self.PIN != self.corresponding_pin(self.get_parameter("PIN").value):
+            GPIO.output(self.PIN, GPIO.LOW)
+            self.PIN = self.corresponding_pin(self.get_parameter("PIN").value)
+            GPIO.setup(self.PIN, GPIO.OUT)
+            self.log.info("New MOSFET GPIO Pin: " + str(self.PIN))
+
+    def corresponding_pin(self, num):
+        pins = [11, 16, 17, 18]
+        return pins[num-1]
+
+
 
     def joy_callback(self, joy):
         # If button is pressed after not being pressed
