@@ -6,6 +6,7 @@
 import rclpy
 from rclpy.node import Node 
 from rcl_interfaces.msg import ParameterDescriptor, IntegerRange
+from std_msgs.msg import Bool
 from sensor_msgs.msg import Joy
 
 import RPi.GPIO as GPIO
@@ -22,7 +23,7 @@ class MOSFETNode(Node):
         self.log = self.get_logger()
 
         # GPIO Pin to turn on and off
-        self.PIN = 11
+        self.PIN = 16
 
         # GPIO Pin Parameter
         bounds = IntegerRange()
@@ -30,7 +31,7 @@ class MOSFETNode(Node):
         bounds.to_value = 4 
         bounds.step = 1
         descriptor = ParameterDescriptor(integer_range = [bounds])
-        self.declare_parameter("PIN", 1, descriptor)
+        self.declare_parameter("PIN", 2, descriptor)
 
         # Vartiable deciding whether the current GPIO Pin should be on or off
         self.cur_signal = GPIO.LOW
@@ -47,8 +48,12 @@ class MOSFETNode(Node):
         # Variable to keep track of if the button on joystick has been let go before next press  
         self.cached_input = False
 
+        # If the thrusters are disabled, don't run the pump
+        self.thrusters_enabled = False
+
         # Subscriber to receive input from joystick
         self.joy_sub = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
+        self.thrusters_enabled_sub = self.create_subscription(Bool, 'thruster_status', self.thrusters_enabled_callback, 10)
 
         self.create_timer(0.1, self.update_parameters)
 
@@ -64,7 +69,8 @@ class MOSFETNode(Node):
         pins = [11, 16, 17, 18]
         return pins[num-1]
 
-
+    def thrusters_enabled_callback(self, msg):
+        self.thrusters_enabled = msg.data
 
     def joy_callback(self, joy):
         # If button is pressed after not being pressed
@@ -76,7 +82,10 @@ class MOSFETNode(Node):
                 self.cur_signal = GPIO.LOW
 
             # Send the new GPIO signal to the pin 
-            GPIO.output(self.PIN, self.cur_signal)
+            if self.thrusters_enabled:
+                GPIO.output(self.PIN, self.cur_signal)
+            else:
+                GPIO.output(self.PIN, GPIO.LOW)
 
         self.cached_input = joy.buttons[2]
 
