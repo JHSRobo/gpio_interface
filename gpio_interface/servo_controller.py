@@ -5,7 +5,7 @@
 # Written by Jack Frings '26
 
 import rclpy
-from rcply.node import Node 
+from rclpy.node import Node 
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 
 import RPi.GPIO as GPIO
@@ -18,7 +18,7 @@ class ServoControllerNode(Node):
 
         # GPIO Setup 
         self.PIN = 13 
-        self.signal = 7.5 # neutral
+        self.angle = 90.0 # neutral position
 
         # Tell the RPi that we are referring to GPIOs by GPIO number
         # This means we are NOT referring to them by pin number.
@@ -31,20 +31,23 @@ class ServoControllerNode(Node):
 
         # Signal Parameter
         descriptor_bounds = FloatingPointRange()
-        descriptor_bounds.from_value = 5.0
-        descriptor_bounds.to_value = 10.0
-        descriptor_bounds.step = 0.01
-        signal_descriptor = ParameterDescriptor(floating_point_range = [descriptor_bounds])
+        descriptor_bounds.from_value = 0
+        descriptor_bounds.to_value = 180
+        descriptor_bounds.step = 0.1
+        angle_descriptor = ParameterDescriptor(floating_point_range = [descriptor_bounds])
 
-        self.declare_parameter('signal', self.signal, signal_descriptor)
-        self.add_on_set_parameters_callback(self.update_parameters)
+        self.declare_parameter('angle', self.angle, angle_descriptor)
+        self.create_timer(0.1, self.update_parameters)
 
-    def update_parameters():
+    def angle_to_duty_cycle(self, angle):
+        return 5 + (angle / 180.0) * 5.0
+
+    def update_parameters(self):
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
-        change = (self.signal != self.get_parameter('signal').value)
+        change = (self.angle != self.get_parameter('angle').value)
         if change:
-            self.signal = self.get_parameter('signal').value 
-            self.pwm.ChangeDutyCycle(self.signal)
+            self.angle = self.get_parameter('angle').value 
+            self.pwm.ChangeDutyCycle(self.angle_to_duty_cycle(self.angle))
 
 def main(args=None):
     rclpy.init(args=args)
