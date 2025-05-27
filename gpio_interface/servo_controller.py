@@ -6,9 +6,10 @@
 
 import rclpy
 from rclpy.node import Node 
-from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from rcl_interfaces.msg import ParameterDescriptor, IntegerRange
+import time
 
-import RPi.GPIO as GPIO
+import pigpio
 
 class ServoControllerNode(Node):
     def __init__(self):
@@ -17,46 +18,39 @@ class ServoControllerNode(Node):
         self.log = self.get_logger()
 
         # GPIO Setup 
-        self.PIN = 13 
-        self.angle = 90.0 # neutral position
+        self.pi = pigpio.pi()
+        self.PIN = 12
 
-        # Tell the RPi that we are referring to GPIOs by GPIO number
-        # This means we are NOT referring to them by pin number.
-        # eg. gpio4 is pin #7, and we reference it as 4.
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.PIN, GPIO.OUT)
+        self.angle = 180
 
-        self.pwm = GPIO.PWM(self.PIN, 50) # 50 Hz 
-        self.pwm.start(0)
+        pulse_width = (self.angle / 360) * (2500 - 500) + 500
+        self.pi.set_servo_pulsewidth(self.PIN, pulse_width)
+        time.sleep(1)
 
         # Signal Parameter
-        descriptor_bounds = FloatingPointRange()
-        descriptor_bounds.from_value = 0
-        descriptor_bounds.to_value = 180
-        descriptor_bounds.step = 0.1
-        angle_descriptor = ParameterDescriptor(floating_point_range = [descriptor_bounds])
+        descriptor_bounds = IntegerRange()
+        descriptor_bounds.from_value = 120
+        descriptor_bounds.to_value = 240
+        descriptor_bounds.step = 1
+        angle_descriptor = ParameterDescriptor(integer_range = [descriptor_bounds])
 
         self.declare_parameter('angle', self.angle, angle_descriptor)
         self.create_timer(0.1, self.update_parameters)
-
-    def angle_to_duty_cycle(self, angle):
-        return 5 + (angle / 180.0) * 5.0
 
     def update_parameters(self):
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
         change = (self.angle != self.get_parameter('angle').value)
         if change:
             self.angle = self.get_parameter('angle').value 
-            self.pwm.ChangeDutyCycle(self.angle_to_duty_cycle(self.angle))
+            pulse_width = (self.angle / 360) * (2500 - 500) + 500
+            self.pi.set_servo_pulsewidth(self.PIN, pulse_width)
+            time.sleep(1)
 
 def main(args=None):
     rclpy.init(args=args)
 
     servo_controller = ServoControllerNode()
     rclpy.spin(servo_controller)
-
-    servo_controller.pwm.stop()
-    GPIO.cleanup()
 
     servo_controller.destroy_node()
     rclpy.shutdown()
