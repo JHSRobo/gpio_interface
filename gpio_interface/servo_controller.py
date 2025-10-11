@@ -9,7 +9,8 @@ from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor, IntegerRange
 import time
 
-import pigpio
+from gpiozero import Servo
+from gpiozero.pins.lgpio import LGPIOFactory
 
 class ServoControllerNode(Node):
     def __init__(self):
@@ -18,13 +19,16 @@ class ServoControllerNode(Node):
         self.log = self.get_logger()
 
         # GPIO Setup 
-        self.pi = pigpio.pi()
+        self.factory = LGPIOFactory()
         self.PIN = 12
+        self.servo = Servo(self.PIN, pin_factory = self.factory, min_pulse_width = 0.0005, max_pulse_width = 0.0025)
 
         self.angle = 180
 
         pulse_width = (self.angle / 360) * (2500 - 500) + 500
-        self.pi.set_servo_pulsewidth(self.PIN, pulse_width)
+        servo_value = (pulse_width - 1500)/1000
+        self.servo.value = servo_value
+        
         time.sleep(1)
 
         # Signal Parameter
@@ -43,7 +47,8 @@ class ServoControllerNode(Node):
         if change:
             self.angle = self.get_parameter('angle').value 
             pulse_width = (self.angle / 360) * (2500 - 500) + 500
-            self.pi.set_servo_pulsewidth(self.PIN, pulse_width)
+            servo_value = (pulse_width - 1500)/1000
+            self.servo.value = servo_value
             time.sleep(1)
 
 def main(args=None):
