@@ -19,7 +19,7 @@ class ServoControllerNode(Node):
         # GPIO Setup
         self.factory = LGPIOFactory()
         self.PIN = 12
-        self.angle = 180  # Initial angle
+        
 
         # Declare angle parameter with bounds
         descriptor_bounds = IntegerRange()
@@ -33,14 +33,15 @@ class ServoControllerNode(Node):
 
     def update_parameters(self):
         new_angle = self.get_parameter('angle').value
-
+        self.angle = 180  # Initial angle
+       
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
+       
         if self.angle != new_angle:
             self.angle = new_angle
 
             # Connects the servo if a change needs to be done
-            servo = Servo(self.PIN, pin_factory=self.factory,
-                          min_pulse_width=0.0005, max_pulse_width=0.0025)
+            servo = Servo(self.PIN, pin_factory=self.factory, min_pulse_width = 0.0005, max_pulse_width = 0.0025)
 
             pulse_width = (self.angle / 360) * (2500 - 500) + 500
             servo_value = (pulse_width - 1500) / 1000
