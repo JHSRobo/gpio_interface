@@ -28,12 +28,13 @@ class ServoControllerNode(Node):
         descriptor_bounds.step = 1
         angle_descriptor = ParameterDescriptor(integer_range=[descriptor_bounds])
 
+        self.angle = 180  # Initial angle
         self.declare_parameter('angle', self.angle, angle_descriptor)
         self.create_timer(0.1, self.update_parameters)
 
     def update_parameters(self):
         new_angle = self.get_parameter('angle').value
-        self.angle = 180  # Initial angle
+    
        
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
        
