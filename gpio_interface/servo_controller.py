@@ -32,8 +32,8 @@ class ServoControllerNode(Node):
         self.declare_parameter('angle', self.angle, angle_descriptor)
         self.create_timer(0.1, self.update_parameters)
 
-    def update_parameters(self):
-        new_angle = self.get_parameter('angle').value
+    def update_parameters(self, value):
+        new_angle = value
     
        
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
@@ -58,6 +58,8 @@ def main(args=None):
 
     servo_controller = ServoControllerNode()
     rclpy.spin(servo_controller)
+
+    servo_controller.update_parameters(180)
 
     servo_controller.destroy_node()
     rclpy.shutdown()
