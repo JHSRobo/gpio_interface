@@ -10,13 +10,14 @@ from std_msgs.msg import Bool
 from sensor_msgs.msg import Joy
 
 from gpiozero import OutputDevice
+from gpiozero import PWMOutputDevice
 from gpiozero.pins.lgpio import LGPIOFactory
 
 
-# Top Left: 11
-# Top Right: 16
-# Bottom Left: 17
-# Bottom Right: 18
+# Top Left: 16
+# Top Right: 11
+# Bottom Left: 18
+# Bottom Right: 19
 
 class MOSFETNode(Node):
     def __init__(self):
@@ -62,11 +63,26 @@ class MOSFETNode(Node):
         if self.PIN != self.corresponding_pin(self.get_parameter("PIN").value):
             self.device.off()
             self.PIN = self.corresponding_pin(self.get_parameter("PIN").value)
-            self.device = OutputDevice(self.PIN)
+
+            if self.PIN == 18:
+                self.device = PWMOutputDevice(self.PIN, pin_factory = self.pin_factory)
+                self.device.value = voltage_to_duty_cycle(5.0)
+            elif self.PIN == 19:
+                self.device = PWMOutputDevice(self.PIN, pin_factory = self.pin_factory)
+                self.device.value = voltage_to_duty_cycle(4.0)
+            else:
+                self.device = OutputDevice(self.PIN)
+
             self.log.info("New MOSFET GPIO Pin: " + str(self.PIN))
+    
+    global voltage_to_duty_cycle
+    def voltage_to_duty_cycle(self, voltage):
+        if voltage == 5.0:
+            return 0.8
+        return (float(voltage) - 0.28)/20.8
 
     def corresponding_pin(self, num):
-        pins = [11, 16, 17, 18]
+        pins = [16, 11, 18, 19]
         return pins[num-1]
 
     def thrusters_enabled_callback(self, msg):
