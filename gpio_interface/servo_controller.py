@@ -33,7 +33,7 @@ class ServoControllerNode(Node):
         self.servo.angle = self.angle
         
         # Allow time to move before closing the servo
-        self.timer = self.create_timer(1, self.close_servo)
+        time.sleep(1)
 
         # Create Signal Parameter
         descriptor_bounds = IntegerRange(from_value=-60, to_value=60, step=1)
@@ -42,10 +42,6 @@ class ServoControllerNode(Node):
         
         # Every 0.1 seconds, check for change to 'angle' parameter
         self.create_timer(0.1, self.update_parameters)
-        
-    def close_servo(self):
-        self.servo.close()
-        self.timer.cancel()
 
     def update_parameters(self):
         # If signal parameter is changed, then change the pwm signal being sent to self.PIN
@@ -60,9 +56,11 @@ class ServoControllerNode(Node):
                 max_angle=90,                               
                 min_pulse_width=0.0005,
                 max_pulse_width=0.0025)
+            
             # Set the Servo angle to updated angle
             self.servo.angle = self.angle
-            self.timer = self.create_timer(1, self.close_servo)
+            
+            time.sleep(1)
 
 def main(args=None):
     rclpy.init(args=args)
