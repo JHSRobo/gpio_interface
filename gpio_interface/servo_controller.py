@@ -37,7 +37,7 @@ class ServoControllerNode(Node):
         self.servo.close()
 
         # Create Signal Parameter
-        descriptor_bounds = IntegerRange(from_value=-60, to_value=90, step=1)
+        descriptor_bounds = IntegerRange(from_value=-50, to_value=75, step=1)
         angle_descriptor = ParameterDescriptor(integer_range = [descriptor_bounds])
         self.declare_parameter('angle', self.angle, angle_descriptor)
         
