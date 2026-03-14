@@ -23,6 +23,7 @@ setup(
             'stepper_motor = gpio_interface.stepper_motor:main',
             'mosfet = gpio_interface.mosfet:main',
             'servo_controller = gpio_interface.servo_controller:main',
+            'brushed_motor = gpio_interface.brushed_motor:main'
         ],
     },
 )
